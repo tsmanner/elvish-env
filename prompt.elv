@@ -1,6 +1,9 @@
 edit:prompt = {
-  put "("
+  hostname
+  put " "
   tilde-abbr $pwd
-  put ") "
-  put (styled "~ " if $? { green } else { red })
+  if ?(git branch) {
+    put (styled { "(" git branch put ")" } yellow)
+  }
+  put (styled " ~ " green)
 }
