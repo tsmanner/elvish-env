@@ -5,3 +5,5 @@ edit:prompt = {
   }
   put (styled " -> " green)
 }
+
+edit:rprompt = { put "" }
