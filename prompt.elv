@@ -4,6 +4,6 @@ edit:prompt = {
   tilde-abbr $pwd
   try {
     put (styled { "(" git branch put ")" } yellow)
-  } except e {}
+  } except e { nop }
   put (styled " ~ " green)
 }
