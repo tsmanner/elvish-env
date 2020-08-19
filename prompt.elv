@@ -1,7 +1,7 @@
 edit:prompt = {
   put (date '+%a %H:%M:%S') " " (hostname) " " (tilde-abbr $pwd)
-  try {
+  if ?(git branch > /dev/null) {
     put (styled ("(" (git branch) ")") yellow)
-  } except e { nop }
+  }
   put (styled " -> " green)
 }
