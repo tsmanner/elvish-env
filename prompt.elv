@@ -6,7 +6,7 @@ edit:prompt = {
   }
   put  " " (styled (print (basename (tilde-abbr $pwd))) cyan)
   if $is_git_repo {
-    put " " (styled (print "("(git rev-parse --symbolic-full-name HEAD)")") yellow)
+    put " " (styled (print "("(basename (git rev-parse --symbolic-full-name HEAD))")") yellow)
   }
   put (styled " -> " green)
 }
