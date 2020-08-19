@@ -1,5 +1,6 @@
 edit:prompt = {
   put "("
   tilde-abbr $pwd
-  put ") ~"
+  put ") "
+  put (styled "~" green)
 }
