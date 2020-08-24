@@ -15,7 +15,7 @@ fn prompt-git-branch-color {
     put "yellow"
   } else {
     put "blue"
-  }     
+  }
 }
 
 edit:prompt = {
