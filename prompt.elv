@@ -1,3 +1,5 @@
+use str
+
 fn prompt-git-branch-color {
   added = 0
   modified = 0
@@ -18,15 +20,45 @@ fn prompt-git-branch-color {
   }
 }
 
+fn extract-git-branch-name {
+  for line [ (git branch --format='%(HEAD)%(refname)') ] {
+    prefix = "*(HEAD detached at "
+    suffix = ")"
+    if (str:has-prefix $line $prefix) {
+      ref = (str:trim-prefix (str:trim-suffix $line $suffix) $prefix)
+      if (str:contains $ref "/") {
+        put "-detached-:"$ref
+      } else {
+        put "-tag-:"$ref
+      }
+    }
+  }
+}
+
+fn prompt-git-ref {
+  try {
+    put (git symbolic-ref -q --short HEAD)
+  } except e {
+    try {
+      ref = (put (basename (git rev-parse --symbolic-full-name HEAD)))
+      if (!=s $ref "HEAD") {
+        put $ref
+      } else {
+        put (extract-git-branch-name)
+      }
+    }
+  }
+}
+
 edit:prompt = {
   put (date '+%a %H:%M:%S') " " (styled (print (hostname)) green)
   is_git_repo = ?(git branch > /dev/null 2>&1)
   if $is_git_repo {
     put " " (styled (print (basename (git rev-parse --show-toplevel))) magenta)
   }
-  put  " " (styled (print (basename (tilde-abbr $pwd))) cyan)
+  put " " (styled (print (basename (tilde-abbr $pwd))) cyan)
   if $is_git_repo {
-    put " " (styled (print "("(basename (git rev-parse --symbolic-full-name HEAD))")") (prompt-git-branch-color))
+    put " " (styled (print "("(prompt-git-ref)")") (prompt-git-branch-color))
   }
   put (styled " -> " green)
 }
