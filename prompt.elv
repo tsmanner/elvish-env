@@ -22,10 +22,9 @@ fn prompt-git-branch-color {
 
 fn extract-git-branch-name {
   for line [ (git branch --format='%(HEAD)%(refname)') ] {
-    prefix = "*(HEAD detached at "
-    suffix = ")"
-    if (str:has-prefix $line $prefix) {
-      ref = (str:trim-prefix (str:trim-suffix $line $suffix) $prefix)
+    detached-head-prefix = "*(HEAD detached at "
+    if (str:has-prefix $line $detached-head-prefix) {
+      ref = (str:trim-prefix (str:trim-suffix $line ")") $detached-head-prefix)
       if (str:contains $ref "/") {
         put "-detached-:"$ref
       } else {
@@ -36,13 +35,14 @@ fn extract-git-branch-name {
 }
 
 fn prompt-git-ref {
+  upstream = [ (str:split "/" (git for-each-ref --format='%(upstream:short)' (git rev-parse --symbolic-full-name HEAD))) ][0]
   try {
-    put (git symbolic-ref -q --short HEAD)
+    put $upstream":"(git symbolic-ref -q --short HEAD)
   } except e {
     try {
-      ref = (put (basename (git rev-parse --symbolic-full-name HEAD)))
+      ref = (basename (git rev-parse --symbolic-full-name HEAD))
       if (!=s $ref "HEAD") {
-        put $ref
+        put $upstream":"$ref
       } else {
         put (extract-git-branch-name)
       }
