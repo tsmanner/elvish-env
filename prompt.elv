@@ -1,66 +1,65 @@
+use math
 use str
 
 fn prompt-git-branch-color {
-  added = 0
-  modified = 0
+  var staged = 0
+  var unstaged = 0
   for line [(git status --porcelain)] {
-    if (==s $line[0] "M") {
-      added = (+ $added 1)
-    } elif (==s $line[1] "M") {
-      modified = (+ $modified 1)
+    if (str:contains-any $line[0] "ADM") {
+      set staged = (+ $staged 1)
+    } elif (str:contains-any $line[1] "ADM") {
+      set unstaged = (+ $unstaged 1)
     }
   }
 
-  if (!= $added 0) {
-    put "green"
-  } elif (!= $modified 0) {
-    put "yellow"
-  } else {
-    put "blue"
-  }
-}
-
-fn extract-git-branch-name {
-  for line [ (git branch --format='%(HEAD)%(refname)') ] {
-    detached-head-prefix = "*(HEAD detached at "
-    if (str:has-prefix $line $detached-head-prefix) {
-      ref = (str:trim-prefix (str:trim-suffix $line ")") $detached-head-prefix)
-      if (str:contains $ref "/") {
-        put "-detached-:"$ref
-      } else {
-        put "-tag-:"$ref
-      }
-    }
-  }
+  put $staged $unstaged
 }
 
 fn prompt-git-ref {
-  upstream = [ (str:split "/" (git for-each-ref --format='%(upstream:short)' (git rev-parse --symbolic-full-name HEAD))) ][0]
-  try {
-    put $upstream":"(git symbolic-ref -q --short HEAD)
-  } except e {
-    try {
-      ref = (basename (git rev-parse --symbolic-full-name HEAD))
-      if (!=s $ref "HEAD") {
-        put $upstream":"$ref
-      } else {
-        put (extract-git-branch-name)
-      }
+  var upstream = (git branch --list --sort -HEAD --format='%(upstream:remotename)' | head -1)
+  var refname = (git branch --list --sort -HEAD --format='%(refname:short)' | head -1)
+  var detached-prefix = "(HEAD detached at "
+  if (str:has-prefix $refname $detached-prefix) {
+    set refname = (str:trim-prefix (str:trim-suffix $refname ")") $detached-prefix)
+    if (str:contains $refname "/") {
+      set upstream = "-detached-"
+    } elif (!=s (git rev-parse --short $refname) $refname) {
+      set upstream = "-tag-"
+    } else {
+      set upstream = "-hash-"
     }
+  } elif (==s "" $upstream) {
+    set upstream = "-none-"
   }
+  put "("$upstream":"$refname")"
 }
 
-edit:prompt = {
+set edit:prompt = {
   put (date '+%a %H:%M:%S') " " (styled (print (hostname)) green)
-  is_git_repo = ?(git branch > /dev/null 2>&1)
+  var is_git_repo = ?(git rev-parse --is-inside-work-tree > /dev/null 2>&1)
   if $is_git_repo {
     put " " (styled (print (basename (git rev-parse --show-toplevel))) magenta)
   }
   put " " (styled (print (basename (tilde-abbr $pwd))) cyan)
   if $is_git_repo {
-    put " " (styled (print "("(prompt-git-ref)")") (prompt-git-branch-color))
+    var ref = (prompt-git-ref)
+    var staged unstaged = (prompt-git-branch-color)
+    if (put (!= 0 $staged) (!= 0 $unstaged)) {
+      var length = (count $ref)
+      var total = (+ $staged $unstaged)
+      var pct-staged = (/ $staged $total)
+      var index-rational = (* $pct-staged $length)
+      var index = (math:min (- $length 1) (math:max 1 (math:round $index-rational)))
+      put " " (styled $ref[..$index] "green") (styled $ref[$index..] "yellow")
+    } elif (!= 0 $staged) {
+      put " " (styled $ref "green")
+    } elif (!= 0 $unstaged) {
+      put " " (styled $ref "yellow")
+    } else {
+      put " " (styled $ref "blue")
+    }
   }
   put (styled " -> " green)
 }
 
-edit:rprompt = { put "" }
+set edit:rprompt = { put "" }
