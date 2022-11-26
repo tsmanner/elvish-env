@@ -1,13 +1,16 @@
 use file
 use str
 
-var default-conf = [&]
-set default-conf[src-dir] = (git rev-parse --show-toplevel)
-set default-conf[build-dir] = (git rev-parse --show-toplevel)/build
-set default-conf[test-target] = tests
+fn get-default-conf {
+  var default-conf = [&]
+  set default-conf[src-dir] = (git rev-parse --show-toplevel)
+  set default-conf[build-dir] = (git rev-parse --show-toplevel)/build
+  set default-conf[test-target] = tests
+}
 
 fn merge-default-conf {|conf|
   var merged = [&]
+  var default-conf = (get-default-conf)
   for key [(keys $default-conf)] {
     if (has-key $conf $key) {
       set merged[$key] = $conf[$key]
@@ -22,7 +25,7 @@ fn get-conf {
   var conf-file = (git rev-parse --show-toplevel)/conf.elv
   # Read the full contents of the config file, if it exists.
   if (not ?(test -e $conf-file)) {
-    put $default-conf
+    put (get-default-conf)
   } else {
     var conf-content = (cat $conf-file | slurp)
     eval &on-end={|conf|
