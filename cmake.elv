@@ -6,6 +6,7 @@ fn get-default-conf {
   set default-conf[src-dir] = (git rev-parse --show-toplevel)
   set default-conf[build-dir] = (git rev-parse --show-toplevel)/build
   set default-conf[test-target] = tests
+  put $default-conf
 }
 
 fn merge-default-conf {|conf|
