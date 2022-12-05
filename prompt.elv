@@ -42,21 +42,25 @@ set edit:prompt = {
   }
   put " " (styled (print (basename (tilde-abbr $pwd))) cyan)
   if $is_git_repo {
-    var ref = (prompt-git-ref)
-    var staged unstaged = (prompt-git-branch-color)
-    if (put (!= 0 $staged) (!= 0 $unstaged)) {
-      var length = (count $ref)
-      var total = (+ $staged $unstaged)
-      var pct-staged = (/ $staged $total)
-      var index-rational = (* $pct-staged $length)
-      var index = (math:min (- $length 1) (math:max 1 (math:round $index-rational)))
-      put " " (styled $ref[..$index] "green") (styled $ref[$index..] "yellow")
-    } elif (!= 0 $staged) {
-      put " " (styled $ref "green")
-    } elif (!= 0 $unstaged) {
-      put " " (styled $ref "yellow")
-    } else {
-      put " " (styled $ref "blue")
+    try {
+      var ref = (prompt-git-ref)
+      var staged unstaged = (prompt-git-branch-color)
+      if (put (!= 0 $staged) (!= 0 $unstaged)) {
+        var length = (count $ref)
+        var total = (+ $staged $unstaged)
+        var pct-staged = (/ $staged $total)
+        var index-rational = (* $pct-staged $length)
+        var index = (math:min (- $length 1) (math:max 1 (math:round $index-rational)))
+        put " " (styled $ref[..$index] "green") (styled $ref[$index..] "yellow")
+      } elif (!= 0 $staged) {
+        put " " (styled $ref "green")
+      } elif (!= 0 $unstaged) {
+        put " " (styled $ref "yellow")
+      } else {
+        put " " (styled $ref "blue")
+      }
+    } catch {
+      put (styled " (-no-refs-)" "yellow")
     }
   }
   put (styled " -> " green)
