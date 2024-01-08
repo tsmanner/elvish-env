@@ -35,7 +35,7 @@ fn prompt-git-ref {
 }
 
 set edit:prompt = {
-  put (date '+%a %H:%M:%S') " " (styled (print (hostname)) green)
+  put (date '+%a %H:%M:%S') " " (styled (print (cat /etc/hostname)) green)
   var is_git_repo = ?(git rev-parse --is-inside-work-tree > /dev/null 2>&1)
   if $is_git_repo {
     put " " (styled (print (basename (git rev-parse --show-toplevel))) magenta)
