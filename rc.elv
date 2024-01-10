@@ -1,10 +1,23 @@
 # Default rc.elv file which will pull and load the modules here
-use epm      # Load the Elvish Package Manager module
-epm:upgrade  # Upgrade installed modules
+use epm
+use os
 
-epm:install github.com/tsmanner/elvish-env  # Install this repo
+epm:upgrade
+epm:install &silent-if-installed=$true github.com/tsmanner/elvish-env
 
-use github.com/tsmanner/elvish-env/prompt     # Load the prompt
-# use github.com/tsmanner/elvish-env/ssh-agent  # Start up and connect to an ssh-agent
+# If nix is installed, add it's paths.
+if (os:exists /nix/var/nix/profiles/default/bin) {
+  set paths = [(printf "%s/.nix-profile/bin" (get-env HOME)) /nix/var/nix/profiles/default/bin $@paths]
+  set-env LOCALE_ARCHIVE (printf "%s/.nix-profile/lib/locale/locale-archive" (get-env HOME))
+}
 
+# If the user has a local bin, make that the first path.
+if (os:exists (printf "%s/.local/bin" (get-env HOME))) {
+  set paths = [(printf "%s/.local/bin" (get-env HOME)) $@paths]
+}
 
+use github.com/tsmanner/elvish-env/prompt
+use github.com/tsmanner/elvish-env/git
+
+fn ls {|@args| e:ls --color $@args}
+fn l  {|@args| ls -al $@args}
