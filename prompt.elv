@@ -4,7 +4,7 @@ use str
 fn prompt-git-branch-color {
   var staged = 0
   var unstaged = 0
-  for line [(git status --porcelain)] {
+  for line [(timeout 1 git status --porcelain)] {
     if (str:contains-any $line[0] "ADM") {
       set staged = (+ $staged 1)
     } elif (str:contains-any $line[1] "ADM") {
@@ -34,6 +34,33 @@ fn prompt-git-ref {
   put "("$upstream":"$refname")"
 }
 
+fn prompt-styled {
+  try {
+    var ref = (prompt-git-ref)
+    var staged unstaged = (prompt-git-branch-color)
+    if (and (!= 0 $staged) (!= 0 $unstaged)) {
+      var length = (count $ref)
+      var total = (+ $staged $unstaged)
+      var pct-staged = (/ $staged $total)
+      var index-rational = (* $pct-staged $length)
+      var index = (math:min (- $length 1) (math:max 1 (math:round $index-rational)))
+      put " " (styled $ref[..$index] "green") (styled $ref[$index..] "yellow")
+    } elif (!= 0 $staged) {
+      put " " (styled $ref "green")
+    } elif (!= 0 $unstaged) {
+      put " " (styled $ref "yellow")
+    } else {
+      put " " (styled $ref "blue")
+    }
+  } catch e {
+    if (and (and (==s $e[reason][type] external-cmd/exited) (==s $e[reason][cmd-name] timeout)) (== $e[reason][exit-status] 124)) {
+      put (styled " ("-timed-out-")" "#606060")
+    } else {
+      put (styled " (-no-refs-)" "yellow")
+    }
+  }
+}
+
 set edit:prompt = {
   put (date '+%a %H:%M:%S') " " (styled (print (cat /etc/hostname)) green)
   var is_git_repo = ?(git rev-parse --is-inside-work-tree > /dev/null 2>&1)
@@ -42,26 +69,7 @@ set edit:prompt = {
   }
   put " " (styled (print (basename (tilde-abbr $pwd))) cyan)
   if $is_git_repo {
-    try {
-      var ref = (prompt-git-ref)
-      var staged unstaged = (prompt-git-branch-color)
-      if (put (!= 0 $staged) (!= 0 $unstaged)) {
-        var length = (count $ref)
-        var total = (+ $staged $unstaged)
-        var pct-staged = (/ $staged $total)
-        var index-rational = (* $pct-staged $length)
-        var index = (math:min (- $length 1) (math:max 1 (math:round $index-rational)))
-        put " " (styled $ref[..$index] "green") (styled $ref[$index..] "yellow")
-      } elif (!= 0 $staged) {
-        put " " (styled $ref "green")
-      } elif (!= 0 $unstaged) {
-        put " " (styled $ref "yellow")
-      } else {
-        put " " (styled $ref "blue")
-      }
-    } catch {
-      put (styled " (-no-refs-)" "yellow")
-    }
+    put (prompt-styled)
   }
   put (styled " -> " green)
 }
