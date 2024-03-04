@@ -37,7 +37,11 @@ fn prompt-git-ref {
 fn prompt-styled {
   try {
     var ref = (prompt-git-ref)
-    var staged unstaged = (prompt-git-branch-color)
+    var staged unstaged = (try {
+      (prompt-git-branch-color)
+    } catch {
+      fail [&msg=timeout &ref=$ref]
+    })
     if (and (!= 0 $staged) (!= 0 $unstaged)) {
       var length = (count $ref)
       var total = (+ $staged $unstaged)
@@ -53,8 +57,8 @@ fn prompt-styled {
       put " " (styled $ref "blue")
     }
   } catch e {
-    if (and (and (==s $e[reason][type] external-cmd/exited) (==s $e[reason][cmd-name] timeout)) (== $e[reason][exit-status] 124)) {
-      put (styled " ("-timed-out-")" "#606060")
+    if (and (==s $e[reason][type] fail) (==s $e[reason][content][msg] timeout)) {
+      put " " (styled $e[reason][content][ref] "#606060")
     } else {
       put (styled " (-no-refs-)" "yellow")
     }
