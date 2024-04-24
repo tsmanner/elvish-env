@@ -58,7 +58,7 @@ fn prompt-styled {
     }
   } catch e {
     if (and (==s $e[reason][type] fail) (==s $e[reason][content][msg] timeout)) {
-      put " " (styled $e[reason][content][ref] "#606060")
+      put " " (styled $e[reason][content][ref] "#707070")
     } else {
       put (styled " (-no-refs-)" "yellow")
     }
@@ -68,11 +68,19 @@ fn prompt-styled {
 set edit:prompt = {
   put (date '+%a %H:%M:%S') " " (styled (print (cat /etc/hostname)) green)
   var is_git_repo = ?(git rev-parse --is-inside-work-tree > /dev/null 2>&1)
+  var is_bare = $false
   if $is_git_repo {
+    set is_bare = (==s "true" (git rev-parse --is-bare-repository))
+  }
+  if $is_bare {
+    put " " (styled (print (basename (git rev-parse --absolute-git-dir))) magenta)
+  } elif $is_git_repo {
     put " " (styled (print (basename (git rev-parse --show-toplevel))) magenta)
   }
   put " " (styled (print (basename (tilde-abbr $pwd))) cyan)
-  if $is_git_repo {
+  if $is_bare {
+    put (styled " (-none-:-bare-)" "#707070")
+  } elif $is_git_repo {
     put (prompt-styled)
   }
   put (styled " -> " green)
