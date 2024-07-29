@@ -16,8 +16,8 @@ fn prompt-git-branch-color {
 }
 
 fn prompt-git-ref {
-  var upstream = (git branch --list --sort -HEAD --format='%(upstream:remotename)' | head -1)
-  var refname = (git branch --list --sort -HEAD --format='%(refname:short)' | head -1)
+  var upstream @_ = (git branch --list --sort -HEAD --format='%(upstream:remotename)' | head -1) ""
+  var refname @_ = (git branch --list --sort -HEAD --format='%(refname:short)' | head -1) ""
   var detached-prefix = "(HEAD detached at "
   if (str:has-prefix $refname $detached-prefix) {
     set refname = (str:trim-prefix (str:trim-suffix $refname ")") $detached-prefix)
@@ -38,7 +38,7 @@ fn prompt-styled {
   try {
     var ref = (prompt-git-ref)
     var staged unstaged = (try {
-      (prompt-git-branch-color)
+      prompt-git-branch-color
     } catch {
       fail [&msg=timeout &ref=$ref]
     })
@@ -57,9 +57,10 @@ fn prompt-styled {
       put " " (styled $ref "blue")
     }
   } catch e {
-    if (and (==s $e[reason][type] fail) (==s $e[reason][content][msg] timeout)) {
+    if (and (has-key $e reason) (and (==s $e[reason][type] fail) (==s $e[reason][content][msg] timeout))) {
       put " " (styled $e[reason][content][ref] "#707070")
     } else {
+      put $e
       put (styled " (-no-refs-)" "yellow")
     }
   }
