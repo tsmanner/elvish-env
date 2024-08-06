@@ -18,6 +18,7 @@ fn prompt-git-branch-color {
 fn prompt-git-ref {
   var upstream @_ = (git branch --list --sort -HEAD --format='%(upstream:remotename)' | head -1) ""
   var refname @_ = (git branch --list --sort -HEAD --format='%(refname:short)' | head -1) ""
+  var sep = "?"
   var detached-prefix = "(HEAD detached at "
   if (str:has-prefix $refname $detached-prefix) {
     set refname = (str:trim-prefix (str:trim-suffix $refname ")") $detached-prefix)
@@ -30,8 +31,10 @@ fn prompt-git-ref {
     }
   } elif (==s "" $upstream) {
     set upstream = "-none-"
+  } else {
+    set sep = (git branch --list --sort -HEAD --format='%(upstream:trackshort)' | head -1)
   }
-  put "("$upstream":"$refname")"
+  put "("$upstream$sep$refname")"
 }
 
 fn prompt-styled {
