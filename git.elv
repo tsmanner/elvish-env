@@ -14,10 +14,6 @@ fn fetch {|@remotes|
   }
 }
 
-fn log {|@args|
-  e:git log --pretty=oneline $@args
-}
-
 fn work {|@args|
   var git_root = (realpath (e:git rev-parse --git-common-dir))
   var root = (dirname $git_root)
@@ -63,10 +59,9 @@ edit:add-var s~ {|@args| e:git status $@args }
 edit:add-var d~ {|@args| e:git diff $@args }
 
 # Map some git sub-commands onto their `git:<name>` functions
-edit:add-var git~ {|subcommand @args|
-  if     (==s $subcommand "fetch") { fetch $@args
-  } elif (==s $subcommand "log"  ) { log   $@args
-  } elif (==s $subcommand "work" ) { work  $@args
-  } else { e:git $subcommand $@args
-  }
-}
+# edit:add-var git~ {|subcommand @args|
+#   if     (==s $subcommand "fetch") { fetch $@args
+#   } elif (==s $subcommand "work" ) { work  $@args
+#   } else { e:git $subcommand $@args
+#   }
+# }
